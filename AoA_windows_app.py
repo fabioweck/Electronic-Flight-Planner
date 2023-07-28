@@ -1,20 +1,12 @@
 import PySimpleGUI as sg
 import requests
-import json
-import asyncio
 import os.path
 import matplotlib.pyplot as plt
 import numpy as np
 import ctypes
 import platform
-
-#Makes the program looks with better resolution
-def make_dpi_aware():
-    if int(platform.release()) >= 8:
-        ctypes.windll.shcore.SetProcessDpiAwareness(True)
-
-make_dpi_aware()
-
+import time
+import concurrent.futures
 
 #Theme variables
 
@@ -29,6 +21,14 @@ sg.LOOK_AND_FEEL_TABLE['MyTheme'] = {'BACKGROUND': '#023246',
                                         'PROGRESS_DEPTH': 5, }
 
 sg.theme('MyTheme')
+
+#Makes the program looks with better resolution
+def make_dpi_aware():
+    if int(platform.release()) >= 8:
+        ctypes.windll.shcore.SetProcessDpiAwareness(True)
+
+make_dpi_aware()
+
 
 ############## - Global Variables - ##############
 
@@ -64,7 +64,7 @@ cg_plots = []
 ############## - FUNCTIONS - ##############
 
 #Fetches forecast based on specific location 
-async def get_taf(location):
+def get_taf(location):
 
     response = requests.get(f"https://api-redemet.decea.mil.br/mensagens/taf/{location}?api_key=sJgea8VlPUfxZDd2pH1p3DDw2Vyog6cMNDfres44")
 
@@ -78,7 +78,7 @@ async def get_taf(location):
     return data['data']['data'][0]['mens']
 
 #Fetches current weather based on specific location
-async def get_metar(location):
+def get_metar(location):
 
     response = requests.get(f"https://api-redemet.decea.mil.br/mensagens/metar/{location}?api_key=sJgea8VlPUfxZDd2pH1p3DDw2Vyog6cMNDfres44")
 
@@ -141,17 +141,32 @@ def generate_chart(plots):
     xpoints = np.array([9000,   9700,   14070,  14070,   13000,  8000,    8000,    9000])
     ypoints = np.array([293.86, 293.86, 298.64, 304.71 , 304.71, 302.46 , 298.72 , 293.86])
 
+    zfuelx = np.array([10510, 10510])
+    zfuley = np.array([294.75, 303.59])
+    plt.plot(zfuley, zfuelx, ':', label = 'Max zero fuel weight')
+
+    zfuelx = np.array([12750, 12750])
+    zfuley = np.array([297.20, 304.6])
+    plt.plot(zfuley, zfuelx, ':', label = 'Max landing weight')
+
+    zfuelx = np.array([13870, 13870])
+    zfuley = np.array([298.42, 304.71])
+    plt.plot(zfuley, zfuelx, ':', label = 'Max takeoff weight')
+
     for plot in plots:
         cgx = np.array([plot[1]])
         cgy = np.array([plot[2]])
         plt.plot(cgy, cgx, plot[3], label = plot[0])
 
-    plt.plot(ypoints, xpoints, ':', linewidth = '2.0', label='CG limits')
+    plt.plot(ypoints, xpoints, 'b--', linewidth = '2.0', label='CG limits')
     plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
     plt.legend()
     plt.show()
 
-async def program():
+
+def program():
+
+    metar_msg = ''
 
     tab1_list_column = [
         [sg.Text('Favorites', size=(10,1))],
@@ -161,7 +176,8 @@ async def program():
 
     tab1_display_column = [
         [sg.Push(), sg.Button('Search'), sg.In(key='search_metar', size=(6,1)), sg.Push()],
-        [sg.Frame('Metar/TAF',[[sg.Multiline(size=(100,20), key='display-weather')], [sg.Push(), sg.Button('Clear')]])]
+        [sg.Frame('Metar/TAF',[[sg.Multiline(size=(100,20), key='display-weather')], 
+        [sg.Push(), sg.Button('Clear')]])]
     ]
 
     tab1_layout = [
@@ -213,31 +229,141 @@ async def program():
         [sg.Text('Takeoff center of gravity', key='cg3')],
         [sg.Text('Landing Weight'),           sg.In(size=(8,0), key='land_weight'),sg.In(size=(9,0), key='land_moment')],
         [sg.Text('Landing center of gravity', key='cg4')],
-        [sg.Push(), sg.Button('Generate CG envelope', key='cg_envelope'), sg.Push()]
+    ]
 
-    ] 
-
-    tab2_layout = [
-        [sg.Push(), sg.Radio('CITATION CJ3/525B (PRVNA) - WEIGHT AND BALANCE COMPUTATION FORM', font='Arial', group_id=1, key='cj3_form', enable_events=True), sg.Push()],
-        [sg.Push(), sg.Text('Weight in pounds, Arm in inches, Moment = moment/100'), sg.Push()],
-        [sg.HorizontalSeparator()],
-        [sg.Push(), sg.Column(tab2_calc1, element_justification='r', key='cj3_sideA'), 
+    cj3_form = [
+        [sg.Push(), sg.vtop(sg.Column(tab2_calc1, element_justification='r', key='cj3_sideA')), 
             sg.VerticalSeparator(), 
             sg.vtop(sg.Column(tab2_calc2, element_justification='r', key='cj3_sideB')), 
             sg.Push()]
-        ]
+    ] 
+
+    tab2_layout = [
+        [sg.Push(), sg.Radio('CITATION CJ3/525B (PRVNA) - WEIGHT AND BALANCE COMPUTATION FORM', font='Arial', group_id=1, key='cj3_button', enable_events=True), sg.Push()],
+        [sg.Push(), sg.Text('Weight in pounds, Arm in inches, Moment = moment/100'), sg.Push()],
+        [sg.Frame('Form', cj3_form, visible=False, key='cj3_form')],
+        [sg.Push(), sg.Button('Generate CG envelope', key='cg_envelope'), sg.Push()]
+    ]
 
     tab3_layout = [
         [sg.Text("This application is a simple graphic user interface")]
+    ]
+
+    tab_settings = [
+        [sg.Radio('Theme', group_id=1)]
     ]    
 
     layout = [
-            [sg.TabGroup([[sg.Tab('Weather', tab1_layout), sg.Tab('W/B', tab2_layout), sg.Tab('About', tab3_layout, element_justification='c')]])]
+            [sg.TabGroup([
+                [sg.Tab('Weather', tab1_layout), 
+                 sg.Tab('W/B', tab2_layout, element_justification='c'),
+                 sg.Tab('Settings', tab_settings), 
+                 sg.Tab('About', tab3_layout, element_justification='c')
+                 ]
+                ])]
             ]    
 
     window = sg.Window('Electronic Flight Planner - Fabio Weck', layout, finalize=True)
 
-    msg = ''
+    def calc_acft_load():
+        sum_weight = 0
+        for i in range(1,17):
+            sum_weight += float(values[f"column{i}"])
+        window['total1'].update(sum_weight)
+        window['payload_weight'].update(sum_weight)
+
+        find_moment = 0
+        moment_total = 0
+        for i in range(1,17):
+            find_moment = (float(values[f"arm{i}"]) * float(values[f"column{i}"]))/100
+            moment_total += find_moment
+            window[f"column2{i}"].update(find_moment)
+        moment_total = round(moment_total, 2)
+        window['total2'].update(moment_total)
+        window['payload_moment'].update(moment_total)
+        zerof_weight = float(values['empty_weight']) + sum_weight
+        zerof_moment = float(values['empty_moment']) + moment_total
+        zerof_cg = round(zerof_moment/zerof_weight*100, 1)
+        if len(cg_plots) == 0:
+            cg_plots.append(('ZFW CG', zerof_weight, zerof_cg, 'o'))
+        else:
+            cg_plots.clear()
+            cg_plots.append(('ZFW CG', zerof_weight, zerof_cg, 'o'))
+        window['zerof_weight'].update(zerof_weight)
+        window['zerof_moment'].update(zerof_moment)
+        window['cg1'].update(f"ZFW center of gravity: {zerof_cg}")
+        if zerof_weight > 10510:
+            sg.popup('Max. zero fuel weight is 10510 lbs')
+            window['zerof_weight'].update(background_color='red')
+        else:
+            window['zerof_weight'].update(background_color='#d4d4ce')
+        
+
+    def compute_weight():
+
+        if values['payload_weight'] == '':
+                sg.popup('Please calculate payload first')
+        elif values['fuel_weight'] == '' and values['fuel_to_destination'] == '':
+            sg.popup("Please type in 'total fuel' and 'fuel to destination'")
+        elif values['fuel_weight'] == '':
+                sg.popup("Please type in 'total fuel'")
+        elif values['fuel_to_destination'] == '':
+            sg.popup("Please type in 'fuel to destination'")
+        elif int(values['fuel_weight']) > 4710:
+            sg.popup("Max. fuel total 4710 lbs")
+        else:
+            #calculate zero fuel weight
+            
+            fuel_weight = int(values['fuel_weight'])
+            if fuel_weight == 4710:
+                fuel_weight = 4700
+                print(fuel_weight)
+            for fuel in cj3_wing_tank_moments:
+                if fuel == str(fuel_weight):
+                    window['fuel_weight_upd'].update(fuel_weight)
+                    fuel_moment = cj3_wing_tank_moments[fuel]
+                    window['fuel_moment'].update(fuel_moment)
+                    ramp_weight = round(fuel_weight + float(values['zerof_weight']), 2)
+                    ramp_moment = round(float(values['zerof_moment']) + cj3_wing_tank_moments[fuel], 2)
+                    ramp_cg = round(ramp_moment/ramp_weight*100,1)
+                    cg_plots.append(('Ramp CG', ramp_weight, ramp_cg,'go'))
+                    window['ramp_weight'].update(ramp_weight)
+                    window['ramp_moment'].update(ramp_moment)
+                    window['cg2'].update(f"Ramp center of gravity: {ramp_cg}")
+                    if ramp_weight > 14070:
+                        sg.popup('Max. ramp weight is 14070 lbs')
+                        window['ramp_weight'].update(background_color='red')
+                    else:
+                        window['ramp_weight'].update(background_color='#d4d4ce')
+            
+            taxi_moment = round(cj3_wing_tank_moments[str(fuel_weight)] - cj3_wing_tank_moments[str(fuel_weight - int(values['less_taxi_weight']))], 2)
+            window['less_taxi_moment'].update(taxi_moment)
+            tkof_weight = round(ramp_weight - int(values['less_taxi_weight']))
+            tkof_moment = round(ramp_moment - taxi_moment)
+            tkof_cg = round(tkof_moment/tkof_weight*100,1)
+            cg_plots.append(('Takeoff CG', tkof_weight, tkof_cg,'bo'))
+            window['tkof_weight'].update(tkof_weight)
+            window['tkof_moment'].update(tkof_moment)
+            window['cg3'].update(f"Takeoff center of gravity: {tkof_cg}")
+            if tkof_weight > 13870:
+                sg.popup('Max. takeoff weight is 13870 lbs')
+                window['tkof_weight'].update(background_color='red')
+            else:
+                window['tkof_weight'].update(background_color='#d4d4ce')
+            land_weight = round(tkof_weight - int(values['fuel_to_destination']))
+            land_moment = round(tkof_moment - (cj3_wing_tank_moments[str(fuel_weight)] - cj3_wing_tank_moments[str(fuel_weight - int(values['fuel_to_destination']))]))
+            land_cg = round(land_moment/land_weight*100,1)
+            cg_plots.append(('Landing CG', land_weight, land_cg,'ro'))
+            window['land_weight'].update(land_weight)
+            window['land_moment'].update(land_moment)
+            window['cg4'].update(f"Landing center of gravity: {land_cg}")
+            if land_weight > 12510:
+                sg.popup('Max. landing weight is 12510 lbs')
+                window['land_weight'].update(background_color='red')
+            else:
+                window['land_weight'].update(background_color='#d4d4ce')
+
+#################### - MAIN LOOP - ######################
 
     while True:    
         event, values = window.read()        
@@ -264,121 +390,32 @@ async def program():
         if event == 'Search':
             if len(values['search_metar']) < 4:
                 sg.popup("Please type in a valid airpot ICAO code")
-            else: 
-                metar = await get_metar(values['search_metar'])
-                taf = await get_taf(values['search_metar'])
-                msg += f"{metar}\n\n{taf}\n{84*'*'}\n"
-                window['display-weather'].update(msg)
-                
+            else:
+                metar = get_metar(values['search_metar'])
+                taf = get_taf(values['search_metar'])
+                metar_msg += f"{metar}\n\n{taf}\n{100*'*'}\n"
+                window['display-weather'].update(metar_msg)
+           
                 
         if event == 'Clear':
             window['display-weather'].update('')
-            msg = ''
+            metar_msg = ''
 
         if event == 'calc1':
-            sum_weight = 0
-            for i in range(1,17):
-                sum_weight += float(values[f"column{i}"])
-            window['total1'].update(sum_weight)
-            window['payload_weight'].update(sum_weight)
-
-            find_moment = 0
-            moment_total = 0
-            for i in range(1,17):
-                find_moment = (float(values[f"arm{i}"]) * float(values[f"column{i}"]))/100
-                moment_total += find_moment
-                window[f"column2{i}"].update(find_moment)
-            moment_total = round(moment_total, 2)
-            window['total2'].update(moment_total)
-            window['payload_moment'].update(moment_total)
-            zerof_weight = float(values['empty_weight']) + sum_weight
-            zerof_moment = float(values['empty_moment']) + moment_total
-            zerof_cg = round(zerof_moment/zerof_weight*100, 1)
-            if len(cg_plots) == 0:
-                cg_plots.append(('ZFW CG', zerof_weight, zerof_cg, 'o'))
-            else:
-                cg_plots.clear()
-                cg_plots.append(('ZFW CG', zerof_weight, zerof_cg, 'o'))
-            window['zerof_weight'].update(zerof_weight)
-            window['zerof_moment'].update(zerof_moment)
-            window['cg1'].update(f"ZFW center of gravity: {zerof_cg}")
-            if zerof_weight > 10510:
-                sg.popup('Max. zero fuel weight is 10510 lbs')
-                window['zerof_weight'].update(background_color='red')
-            else:
-                window['zerof_weight'].update(background_color='#d4d4ce')
+            calc_acft_load()
 
         if event == 'Compute':
-            if values['payload_weight'] == '':
-                sg.popup('Please calculate payload first')
-            elif values['fuel_weight'] == '' and values['fuel_to_destination'] == '':
-                sg.popup("Please type in 'total fuel' and 'fuel to destination'")
-            elif values['fuel_weight'] == '':
-                    sg.popup("Please type in 'total fuel'")
-            elif values['fuel_to_destination'] == '':
-                sg.popup("Please type in 'fuel to destination'")
-            elif int(values['fuel_weight']) > 4710:
-                sg.popup("Max. fuel total 4710 lbs")
-            else:
-                #calculate zero fuel weight
-                
-                fuel_weight = int(values['fuel_weight'])
-                if fuel_weight == 4710:
-                    fuel_weight = 4700
-                    print(fuel_weight)
-                for fuel in cj3_wing_tank_moments:
-                    if fuel == str(fuel_weight):
-                        window['fuel_weight_upd'].update(fuel_weight)
-                        fuel_moment = cj3_wing_tank_moments[fuel]
-                        window['fuel_moment'].update(fuel_moment)
-                        ramp_weight = round(fuel_weight + float(values['zerof_weight']), 2)
-                        ramp_moment = round(float(values['zerof_moment']) + cj3_wing_tank_moments[fuel], 2)
-                        ramp_cg = round(ramp_moment/ramp_weight*100,1)
-                        cg_plots.append(('Ramp CG', ramp_weight, ramp_cg,'go'))
-                        window['ramp_weight'].update(ramp_weight)
-                        window['ramp_moment'].update(ramp_moment)
-                        window['cg2'].update(f"Ramp center of gravity: {ramp_cg}")
-                        if ramp_weight > 14070:
-                            sg.popup('Max. ramp weight is 14070 lbs')
-                            window['ramp_weight'].update(background_color='red')
-                        else:
-                            window['ramp_weight'].update(background_color='#d4d4ce')
-                
-                taxi_moment = round(cj3_wing_tank_moments[str(fuel_weight)] - cj3_wing_tank_moments[str(fuel_weight - int(values['less_taxi_weight']))], 2)
-                window['less_taxi_moment'].update(taxi_moment)
-                tkof_weight = round(ramp_weight - int(values['less_taxi_weight']))
-                tkof_moment = round(ramp_moment - taxi_moment)
-                tkof_cg = round(tkof_moment/tkof_weight*100,1)
-                cg_plots.append(('Takeoff CG', tkof_weight, tkof_cg,'bo'))
-                window['tkof_weight'].update(tkof_weight)
-                window['tkof_moment'].update(tkof_moment)
-                window['cg3'].update(f"Takeoff center of gravity: {tkof_cg}")
-                if tkof_weight > 13870:
-                    sg.popup('Max. takeoff weight is 13870 lbs')
-                    window['tkof_weight'].update(background_color='red')
-                else:
-                    window['tkof_weight'].update(background_color='#d4d4ce')
-                land_weight = round(tkof_weight - int(values['fuel_to_destination']))
-                land_moment = round(tkof_moment - (cj3_wing_tank_moments[str(fuel_weight)] - cj3_wing_tank_moments[str(fuel_weight - int(values['fuel_to_destination']))]))
-                land_cg = round(land_moment/land_weight*100,1)
-                cg_plots.append(('Landing CG', land_weight, land_cg,'ro'))
-                window['land_weight'].update(land_weight)
-                window['land_moment'].update(land_moment)
-                window['cg4'].update(f"Landing center of gravity: {land_cg}")
-                if land_weight > 12510:
-                    sg.popup('Max. landing weight is 12510 lbs')
-                    window['land_weight'].update(background_color='red')
-                else:
-                    window['land_weight'].update(background_color='#d4d4ce')
+            compute_weight()
         
         if event == 'cg_envelope':
             try:
                 generate_chart(cg_plots)
                 cg_plots.clear()
             except:
-                sg.popup('Please calculate current CG first')
+                sg.popup('Please calculate current CG first')   
 
-                
+        if event == 'cj3_button':
+            window['cj3_form'].update(visible=True)         
                     
      
-asyncio.run(program())
+program()

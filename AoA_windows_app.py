@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import ctypes
 import platform
-import time
-import concurrent.futures
 
 #Theme variables
 

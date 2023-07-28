@@ -6,169 +6,207 @@ import numpy as np
 import ctypes
 import platform
 
-#Theme variables
+#####################################
+########### - Classes - #############
+#************************************
 
-sg.LOOK_AND_FEEL_TABLE['MyTheme'] = {'BACKGROUND': '#023246',
-                                        'TEXT': '#ffffff',
-                                        'INPUT': '#d4d4ce',
-                                        'TEXT_INPUT': '#023246',
-                                        'SCROLL': '#d4d4ce',
-                                        'BUTTON': ('#ffffff', '#023246'),
-                                        'PROGRESS': ('#D1826B', '#CC8019'),
-                                        'BORDER': 2, 'SLIDER_DEPTH': 1, 
-                                        'PROGRESS_DEPTH': 5, }
+class FileHandler:
 
-sg.theme('MyTheme')
+    def __init__(self) -> None:
+        path = './favorites.csv'
+        check_file = os.path.isfile(path)
+
+        if check_file:
+            pass
+        else:
+            open('favorites.csv', 'w').close()
+
+    def get_favorites(self):   
+
+        with open('favorites.csv') as favorites_file:
+
+            new_list = []
+            for fav in favorites_file:
+                fav = fav.strip()
+                fav = fav.upper()
+                new_list.append(fav)
+            favorites_file.close()
+        
+        return new_list
+
+        #Adds new location in the favorites file
+    def add_favorites(self, location):
+
+        with open('favorites.csv', 'a') as favorites_file:
+            favorites_file.write(location + "\n")
+        favorites_file.close()
+
+        #Removes selected favorite by overwriting original file without chosen location
+    def remove_favorite(self, location):
+
+            new_list = [item for item in self.get_favorites() if item != location.upper()]
+
+            with open('favorites.csv', 'w') as favorites_file:
+
+                for item in new_list:
+                    favorites_file.write(item + '\n')
+            
+            favorites_file.close()
+
+class Weather:
+
+    def __init__(self) -> None:
+        self.message = ""
+
+    def get_taf(self, location):
+
+        response = requests.get(f"https://api-redemet.decea.mil.br/mensagens/taf/{location}?api_key=sJgea8VlPUfxZDd2pH1p3DDw2Vyog6cMNDfres44")
+        data = response.json()
+
+        try:
+            print(data['data']['data'][0]['mens'])
+        except:
+            self.message += 'No TAF for this location'
+
+        self.message += f"{data['data']['data'][0]['mens']}\n{100*'_'}"
+
+    #Fetches current weather based on specific location
+    def get_metar(self, location):
+
+        response = requests.get(f"https://api-redemet.decea.mil.br/mensagens/metar/{location}?api_key=sJgea8VlPUfxZDd2pH1p3DDw2Vyog6cMNDfres44")
+
+        data = response.json()
+
+        try:
+            print(data['data']['data'][0]['mens'])
+        except:
+            self.message += 'No METAR for this location'
+
+        self.message += f"{data['data']['data'][0]['mens']}\n\n"
+
+    def return_message(self):
+        return self.message
+    
+    def clear_message(self):
+        self.message = ""
+
+class Variables:
+
+    def __init__(self) -> None:
+        self.cj3_wing_tank_moments = {
+            '100': 323.47, '2500': 7771.75,
+            '200': 642.06, '2600': 8079.76,
+            '300': 958.44, '2700': 8388.09,
+            '400': 1273.08, '2800': 8696.24,
+            '500': 1586.45, '2900': 9005.37,
+            '600': 1898.76, '3000': 9314.40,
+            '700': 2210.11, '3100': 9624.26,
+            '800': 2520.64, '3200': 9934.08,
+            '900': 2830.77, '3300': 10244.52,
+            '1000': 3140.40, '3400': 10554.62,
+            '1100': 3449.71, '3500': 10864.70,
+            '1200': 3759.36, '3600': 11175.12,
+            '1300': 4068.74, '3700': 11485.17,
+            '1400': 4378.08, '3800': 11795.58,
+            '1500': 4687.35, '3900': 12105.60,
+            '1600': 4996.32, '4000': 12415.60,
+            '1700': 5305.36, '4100': 12725.17,
+            '1800': 5614.02, '4200': 13035.12,
+            '1900': 5922.87, '4300': 13344.62,
+            '2000': 6231.40, '4400': 13654.08,
+            '2100': 6539.82, '4500': 13963.50,
+            '2200': 6847.94, '4600': 14272.88,
+            '2300': 7155.99, '4700': 14581.75,
+            '2400': 7463.76, '4710': 14612.81
+        }
+
+        self.cg_plots = []
+
+    def add_plots(self, plot):
+        self.cg_plots.append(plot)
+
+    def get_plots(self):
+        return self.cg_plots
+    
+    def erase_plots(self):
+        self.cg_plots.clear()
+
+class Environment:
+
+    def __init__(self) -> None:  
+        sg.LOOK_AND_FEEL_TABLE['MyTheme'] = {'BACKGROUND': '#023246',
+                                                'TEXT': '#ffffff',
+                                                'INPUT': '#d4d4ce',
+                                                'TEXT_INPUT': '#023246',
+                                                'SCROLL': '#d4d4ce',
+                                                'BUTTON': ('#ffffff', '#023246'),
+                                                'PROGRESS': ('#D1826B', '#CC8019'),
+                                                'BORDER': 2, 'SLIDER_DEPTH': 1, 
+                                                'PROGRESS_DEPTH': 5, }
+        sg.theme('MyTheme')
+        self.make_dpi_aware()
 
 #Makes the program looks with better resolution
-def make_dpi_aware():
-    if int(platform.release()) >= 8:
-        ctypes.windll.shcore.SetProcessDpiAwareness(True)
+    def make_dpi_aware(self):
+        if int(platform.release()) >= 8:
+            ctypes.windll.shcore.SetProcessDpiAwareness(True)
 
-make_dpi_aware()
+    
 
+class EnvelopeChart:
 
-############## - Global Variables - ##############
-
-cj3_wing_tank_moments = {
-    '100': 323.47, '2500': 7771.75,
-    '200': 642.06, '2600': 8079.76,
-    '300': 958.44, '2700': 8388.09,
-    '400': 1273.08, '2800': 8696.24,
-    '500': 1586.45, '2900': 9005.37,
-    '600': 1898.76, '3000': 9314.40,
-    '700': 2210.11, '3100': 9624.26,
-    '800': 2520.64, '3200': 9934.08,
-    '900': 2830.77, '3300': 10244.52,
-    '1000': 3140.40, '3400': 10554.62,
-    '1100': 3449.71, '3500': 10864.70,
-    '1200': 3759.36, '3600': 11175.12,
-    '1300': 4068.74, '3700': 11485.17,
-    '1400': 4378.08, '3800': 11795.58,
-    '1500': 4687.35, '3900': 12105.60,
-    '1600': 4996.32, '4000': 12415.60,
-    '1700': 5305.36, '4100': 12725.17,
-    '1800': 5614.02, '4200': 13035.12,
-    '1900': 5922.87, '4300': 13344.62,
-    '2000': 6231.40, '4400': 13654.08,
-    '2100': 6539.82, '4500': 13963.50,
-    '2200': 6847.94, '4600': 14272.88,
-    '2300': 7155.99, '4700': 14581.75,
-    '2400': 7463.76, '4710': 14612.81
-}
-
-cg_plots = []
-
-############## - FUNCTIONS - ##############
-
-#Fetches forecast based on specific location 
-def get_taf(location):
-
-    response = requests.get(f"https://api-redemet.decea.mil.br/mensagens/taf/{location}?api_key=sJgea8VlPUfxZDd2pH1p3DDw2Vyog6cMNDfres44")
-
-    data = response.json()
-
-    try:
-        print(data['data']['data'][0]['mens'])
-    except:
-        return 'No TAF for this location'
-
-    return data['data']['data'][0]['mens']
-
-#Fetches current weather based on specific location
-def get_metar(location):
-
-    response = requests.get(f"https://api-redemet.decea.mil.br/mensagens/metar/{location}?api_key=sJgea8VlPUfxZDd2pH1p3DDw2Vyog6cMNDfres44")
-
-    data = response.json()
-
-    try:
-        print(data['data']['data'][0]['mens'])
-    except:
-        return 'No METAR for this location'
-
-    return data['data']['data'][0]['mens']
-
-#Reades and display favorites file
-def get_favorites():
-
-    path = './favorites.csv'
-    check_file = os.path.isfile(path)
-
-    if check_file:
+    def __init__(self) -> None:
         pass
-    else:
-        open('favorites.csv', 'w').close()   
 
-    with open('favorites.csv') as favorites_file:
+    def zfw_limit(self):
+        zfuelx = np.array([10510, 10510])
+        zfuley = np.array([294.75, 303.59])
+        plt.plot(zfuley, zfuelx, ':', label = 'Max zero fuel weight')
 
-        new_list = []
-        for fav in favorites_file:
-            fav = fav.strip()
-            fav = fav.upper()
-            new_list.append(fav)
-        favorites_file.close()
-    
-    return new_list
+    def tkof_limit(self):
+        tkofx = np.array([13870, 13870])
+        tkofy = np.array([298.42, 304.71])
+        plt.plot(tkofy, tkofx, ':', label = 'Max takeoff weight')
 
-#Adds new location in the favorites file
-def add_favorites(location):
+    def land_limit(self):
+        landx = np.array([12750, 12750])
+        landy = np.array([297.20, 304.6])
+        plt.plot(landy, landx, ':', label = 'Max landing weight')
 
-    with open('favorites.csv', 'a') as favorites_file:
-        favorites_file.write(location + "\n")
-    favorites_file.close()
+    def generate_chart(self, plots: Variables):
 
-#Removes selected favorite by overwriting original file without chosen location
-def remove_favorite(location):
+        plt.title("Citation CJ3 - Envelope Chart")
+        plt.xlabel("Center of gravity (Inches)")
+        plt.ylabel("Weight (Pounds)")
+        self.zfw_limit()
+        self.tkof_limit()
+        self.land_limit()
 
-    new_list = [item for item in get_favorites() if item != location.upper()]
+        xpoints = np.array([9000,   9700,   14070,  14070,   13000,  8000,    8000,    9000])
+        ypoints = np.array([293.86, 293.86, 298.64, 304.71 , 304.71, 302.46 , 298.72 , 293.86])
 
-    with open('favorites.csv', 'w') as favorites_file:
+        for plot in plots:
+            cgx = np.array([plot[1]])
+            cgy = np.array([plot[2]])
+            plt.plot(cgy, cgx, plot[3], label = plot[0])
 
-        for item in new_list:
-            favorites_file.write(item + '\n')
-    
-    favorites_file.close()
-
-def generate_chart(plots):
-
-    plt.title("Citation CJ3 - Envelope Chart")
-    plt.xlabel("Center of gravity (Inches)")
-    plt.ylabel("Weight (Pounds)")
-
-    xpoints = np.array([9000,   9700,   14070,  14070,   13000,  8000,    8000,    9000])
-    ypoints = np.array([293.86, 293.86, 298.64, 304.71 , 304.71, 302.46 , 298.72 , 293.86])
-
-    zfuelx = np.array([10510, 10510])
-    zfuley = np.array([294.75, 303.59])
-    plt.plot(zfuley, zfuelx, ':', label = 'Max zero fuel weight')
-
-    zfuelx = np.array([12750, 12750])
-    zfuley = np.array([297.20, 304.6])
-    plt.plot(zfuley, zfuelx, ':', label = 'Max landing weight')
-
-    zfuelx = np.array([13870, 13870])
-    zfuley = np.array([298.42, 304.71])
-    plt.plot(zfuley, zfuelx, ':', label = 'Max takeoff weight')
-
-    for plot in plots:
-        cgx = np.array([plot[1]])
-        cgy = np.array([plot[2]])
-        plt.plot(cgy, cgx, plot[3], label = plot[0])
-
-    plt.plot(ypoints, xpoints, 'b--', linewidth = '2.0', label='CG limits')
-    plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
-    plt.legend()
-    plt.show()
+        plt.plot(ypoints, xpoints, 'b--', linewidth = '2.0', label='CG limits')
+        plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
+        plt.legend()
+        plt.show()
 
 
 def program():
-
-    metar_msg = ''
+    
+    environment = Environment()
+    favorites_file = FileHandler()
+    weather = Weather()
+    variable = Variables()
+    envelope = EnvelopeChart()
 
     tab1_list_column = [
         [sg.Text('Favorites', size=(10,1))],
-        [sg.Listbox(get_favorites(), size=(10, 10), key='favorites', right_click_menu=['', ['Delete']], enable_events=True)],
+        [sg.Listbox(favorites_file.get_favorites(), size=(10, 10), key='favorites', right_click_menu=['', ['Delete']], enable_events=True)],
         [sg.In(key='add-favorite', size=(5,1)), sg.Button('ADD'), sg.Push()]
     ]
 
@@ -282,11 +320,11 @@ def program():
         zerof_weight = float(values['empty_weight']) + sum_weight
         zerof_moment = float(values['empty_moment']) + moment_total
         zerof_cg = round(zerof_moment/zerof_weight*100, 1)
-        if len(cg_plots) == 0:
-            cg_plots.append(('ZFW CG', zerof_weight, zerof_cg, 'o'))
+        if len(variable.get_plots()) == 0:
+            variable.add_plots(('ZFW CG', zerof_weight, zerof_cg, 'o'))
         else:
-            cg_plots.clear()
-            cg_plots.append(('ZFW CG', zerof_weight, zerof_cg, 'o'))
+            variable.erase_plots()
+            variable.add_plots(('ZFW CG', zerof_weight, zerof_cg, 'o'))
         window['zerof_weight'].update(zerof_weight)
         window['zerof_moment'].update(zerof_moment)
         window['cg1'].update(f"ZFW center of gravity: {zerof_cg}")
@@ -316,15 +354,15 @@ def program():
             if fuel_weight == 4710:
                 fuel_weight = 4700
                 print(fuel_weight)
-            for fuel in cj3_wing_tank_moments:
+            for fuel in variable.cj3_wing_tank_moments:
                 if fuel == str(fuel_weight):
                     window['fuel_weight_upd'].update(fuel_weight)
-                    fuel_moment = cj3_wing_tank_moments[fuel]
+                    fuel_moment = variable.cj3_wing_tank_moments[fuel]
                     window['fuel_moment'].update(fuel_moment)
                     ramp_weight = round(fuel_weight + float(values['zerof_weight']), 2)
-                    ramp_moment = round(float(values['zerof_moment']) + cj3_wing_tank_moments[fuel], 2)
+                    ramp_moment = round(float(values['zerof_moment']) + variable.cj3_wing_tank_moments[fuel], 2)
                     ramp_cg = round(ramp_moment/ramp_weight*100,1)
-                    cg_plots.append(('Ramp CG', ramp_weight, ramp_cg,'go'))
+                    variable.add_plots(('Ramp CG', ramp_weight, ramp_cg,'go'))
                     window['ramp_weight'].update(ramp_weight)
                     window['ramp_moment'].update(ramp_moment)
                     window['cg2'].update(f"Ramp center of gravity: {ramp_cg}")
@@ -334,12 +372,12 @@ def program():
                     else:
                         window['ramp_weight'].update(background_color='#d4d4ce')
             
-            taxi_moment = round(cj3_wing_tank_moments[str(fuel_weight)] - cj3_wing_tank_moments[str(fuel_weight - int(values['less_taxi_weight']))], 2)
+            taxi_moment = round(variable.cj3_wing_tank_moments[str(fuel_weight)] - variable.cj3_wing_tank_moments[str(fuel_weight - int(values['less_taxi_weight']))], 2)
             window['less_taxi_moment'].update(taxi_moment)
             tkof_weight = round(ramp_weight - int(values['less_taxi_weight']))
             tkof_moment = round(ramp_moment - taxi_moment)
             tkof_cg = round(tkof_moment/tkof_weight*100,1)
-            cg_plots.append(('Takeoff CG', tkof_weight, tkof_cg,'bo'))
+            variable.add_plots(('Takeoff CG', tkof_weight, tkof_cg,'bo'))
             window['tkof_weight'].update(tkof_weight)
             window['tkof_moment'].update(tkof_moment)
             window['cg3'].update(f"Takeoff center of gravity: {tkof_cg}")
@@ -349,9 +387,9 @@ def program():
             else:
                 window['tkof_weight'].update(background_color='#d4d4ce')
             land_weight = round(tkof_weight - int(values['fuel_to_destination']))
-            land_moment = round(tkof_moment - (cj3_wing_tank_moments[str(fuel_weight)] - cj3_wing_tank_moments[str(fuel_weight - int(values['fuel_to_destination']))]))
+            land_moment = round(tkof_moment - (variable.cj3_wing_tank_moments[str(fuel_weight)] - variable.cj3_wing_tank_moments[str(fuel_weight - int(values['fuel_to_destination']))]))
             land_cg = round(land_moment/land_weight*100,1)
-            cg_plots.append(('Landing CG', land_weight, land_cg,'ro'))
+            variable.add_plots(('Landing CG', land_weight, land_cg,'ro'))
             window['land_weight'].update(land_weight)
             window['land_moment'].update(land_moment)
             window['cg4'].update(f"Landing center of gravity: {land_cg}")
@@ -371,15 +409,15 @@ def program():
             if len(values['add-favorite']) < 4:
                 sg.popup("4 letters required")
             else:
-                add_favorites(values['add-favorite'])
-                window['favorites'].update(get_favorites())
+                favorites_file.add_favorites(values['add-favorite'])
+                window['favorites'].update(favorites_file.get_favorites())
                 window['add-favorite'].update("")
         if event == 'Delete':
             if len(values['favorites']) == 0:
                 pass
             else:
-                remove_favorite(values['favorites'][0])
-                window['favorites'].update(get_favorites())
+                favorites_file.remove_favorite(values['favorites'][0])
+                window['favorites'].update(favorites_file.get_favorites())
         if event == 'favorites':
             if len(values['favorites']) == 0:
                 pass
@@ -389,15 +427,14 @@ def program():
             if len(values['search_metar']) < 4:
                 sg.popup("Please type in a valid airpot ICAO code")
             else:
-                metar = get_metar(values['search_metar'])
-                taf = get_taf(values['search_metar'])
-                metar_msg += f"{metar}\n\n{taf}\n{100*'*'}\n"
-                window['display-weather'].update(metar_msg)
+                weather.get_metar(values['search_metar'])
+                weather.get_taf(values['search_metar'])
+                window['display-weather'].update(weather.message)
            
                 
         if event == 'Clear':
             window['display-weather'].update('')
-            metar_msg = ''
+            weather.clear_message()
 
         if event == 'calc1':
             calc_acft_load()
@@ -407,8 +444,8 @@ def program():
         
         if event == 'cg_envelope':
             try:
-                generate_chart(cg_plots)
-                cg_plots.clear()
+                envelope.generate_chart(variable.get_plots())
+                variable.erase_plots()
             except:
                 sg.popup('Please calculate current CG first')   
 

@@ -146,12 +146,11 @@ class Environment:
         sg.theme('MyTheme')
         self.make_dpi_aware()
 
-#Makes the program looks with better resolution
+    #Function to increase visual looking clearness/sharpness
     def make_dpi_aware(self):
         if int(platform.release()) >= 8:
             ctypes.windll.shcore.SetProcessDpiAwareness(True)
-
-    
+ 
 
 class EnvelopeChart:
 
@@ -223,22 +222,22 @@ def program():
     tab2_calc1 = [
         [sg.Push(), sg.Text('AIRCRAFT LOADING'), sg.Push()],
         [sg.Text('Item', size=(4,0)), sg.Text('Arm'), sg.Text('Weight'), sg.Text('Moment')],
-        [sg.Text('Pilot'),                         sg.In(size=(5,0), default_text=131.0, key='arm1'), sg.In(size=(5,0), key='column1', default_text=180),sg.In(size=(7,0), key='column21')],
-        [sg.Text('Co-Pilot'),                      sg.In(size=(5,0), default_text=131.0, key='arm2'), sg.In(size=(5,0), key='column2', default_text=180),sg.In(size=(7,0), key='column22')],
-        [sg.Text('Seat 10'),                       sg.In(size=(5,0), default_text=174.2, key='arm3'), sg.In(size=(5,0), key='column3', default_text=0),sg.In(size=(7,0), key='column23')],
-        [sg.Text('Seat 3'),                        sg.In(size=(5,0), default_text=202.5, key='arm4'), sg.In(size=(5,0), key='column4', default_text=0),sg.In(size=(7,0), key='column24')],
-        [sg.Text('Seat 4'),                        sg.In(size=(5,0), default_text=202.5, key='arm5'), sg.In(size=(5,0), key='column5', default_text=0),sg.In(size=(7,0), key='column25')],
-        [sg.Text('Seat 5'),                        sg.In(size=(5,0), default_text=260.5, key='arm6'), sg.In(size=(5,0), key='column6', default_text=0),sg.In(size=(7,0), key='column26')],
-        [sg.Text('Seat 6'),                        sg.In(size=(5,0), default_text=260.5, key='arm7'), sg.In(size=(5,0), key='column7', default_text=0),sg.In(size=(7,0), key='column27')],
-        [sg.Text('Seat 7'),                        sg.In(size=(5,0), default_text=295.5, key='arm8'), sg.In(size=(5,0), key='column8', default_text=0),sg.In(size=(7,0), key='column28')],
-        [sg.Text('Seat 8'),                        sg.In(size=(5,0), default_text=295.5, key='arm9'), sg.In(size=(5,0), key='column9', default_text=0),sg.In(size=(7,0), key='column29')],
-        [sg.Text('Seat 9 LH Belted Toilet'),       sg.In(size=(5,0), default_text=322.5, key='arm10'), sg.In(size=(5,0), key='column10', default_text=0),sg.In(size=(7,0), key='column210')],
-        [sg.Text('Nose baggage'),                  sg.In(size=(5,0), default_text=74.0, key='arm11'), sg.In(size=(5,0), key='column11', default_text=10),sg.In(size=(7,0), key='column211')],
-        [sg.Text('Charts'),                        sg.In(size=(5,0), default_text=150.9, key='arm12'), sg.In(size=(5,0), key='column12', default_text=5),sg.In(size=(7,0), key='column212')],
-        [sg.Text('LHF Evaporator Cabinet'),        sg.In(size=(5,0), default_text=156.3, key='arm13'), sg.In(size=(5,0), key='column13', default_text=5),sg.In(size=(7,0), key='column213')],
-        [sg.Text('RH Slimlime Refreshment Center'),sg.In(size=(5,0), default_text=157.2, key='arm14'), sg.In(size=(5,0), key='column14', default_text=15),sg.In(size=(7,0), key='column214')],
-        [sg.Text('LH Aft Vanity'),                 sg.In(size=(5,0), default_text=334.9, key='arm15'), sg.In(size=(5,0), key='column15', default_text=15),sg.In(size=(7,0), key='column215')],
-        [sg.Text('Tailcone Baggage'),              sg.In(size=(5,0), default_text=414.6, key='arm16'), sg.In(size=(5,0), key='column16', default_text=40),sg.In(size=(7,0), key='column216')],
+        [sg.Text('Pilot'),                         sg.In(size=(5,0), default_text=131.0, key='arm1'),  sg.In(size=(5,0), key='column1',  default_text=180),sg.In(size=(7,0), key='column21')],
+        [sg.Text('Co-Pilot'),                      sg.In(size=(5,0), default_text=131.0, key='arm2'),  sg.In(size=(5,0), key='column2',  default_text=180),sg.In(size=(7,0), key='column22')],
+        [sg.Text('Seat 10'),                       sg.In(size=(5,0), default_text=174.2, key='arm3'),  sg.In(size=(5,0), key='column3',  default_text=0),  sg.In(size=(7,0), key='column23')],
+        [sg.Text('Seat 3'),                        sg.In(size=(5,0), default_text=202.5, key='arm4'),  sg.In(size=(5,0), key='column4',  default_text=0),  sg.In(size=(7,0), key='column24')],
+        [sg.Text('Seat 4'),                        sg.In(size=(5,0), default_text=202.5, key='arm5'),  sg.In(size=(5,0), key='column5',  default_text=0),  sg.In(size=(7,0), key='column25')],
+        [sg.Text('Seat 5'),                        sg.In(size=(5,0), default_text=260.5, key='arm6'),  sg.In(size=(5,0), key='column6',  default_text=0),  sg.In(size=(7,0), key='column26')],
+        [sg.Text('Seat 6'),                        sg.In(size=(5,0), default_text=260.5, key='arm7'),  sg.In(size=(5,0), key='column7',  default_text=0),  sg.In(size=(7,0), key='column27')],
+        [sg.Text('Seat 7'),                        sg.In(size=(5,0), default_text=295.5, key='arm8'),  sg.In(size=(5,0), key='column8',  default_text=0),  sg.In(size=(7,0), key='column28')],
+        [sg.Text('Seat 8'),                        sg.In(size=(5,0), default_text=295.5, key='arm9'),  sg.In(size=(5,0), key='column9',  default_text=0),  sg.In(size=(7,0), key='column29')],
+        [sg.Text('Seat 9 LH Belted Toilet'),       sg.In(size=(5,0), default_text=322.5, key='arm10'), sg.In(size=(5,0), key='column10', default_text=0),  sg.In(size=(7,0), key='column210')],
+        [sg.Text('Nose baggage'),                  sg.In(size=(5,0), default_text=74.0, key='arm11'),  sg.In(size=(5,0), key='column11', default_text=10), sg.In(size=(7,0), key='column211')],
+        [sg.Text('Charts'),                        sg.In(size=(5,0), default_text=150.9, key='arm12'), sg.In(size=(5,0), key='column12', default_text=5),  sg.In(size=(7,0), key='column212')],
+        [sg.Text('LHF Evaporator Cabinet'),        sg.In(size=(5,0), default_text=156.3, key='arm13'), sg.In(size=(5,0), key='column13', default_text=5),  sg.In(size=(7,0), key='column213')],
+        [sg.Text('RH Slimlime Refreshment Center'),sg.In(size=(5,0), default_text=157.2, key='arm14'), sg.In(size=(5,0), key='column14', default_text=15), sg.In(size=(7,0), key='column214')],
+        [sg.Text('LH Aft Vanity'),                 sg.In(size=(5,0), default_text=334.9, key='arm15'), sg.In(size=(5,0), key='column15', default_text=15), sg.In(size=(7,0), key='column215')],
+        [sg.Text('Tailcone Baggage'),              sg.In(size=(5,0), default_text=414.6, key='arm16'), sg.In(size=(5,0), key='column16', default_text=40), sg.In(size=(7,0), key='column216')],
         [sg.Push(), sg.Text('TOTAL', pad=(0)),sg.Text('Weight', key='total1', size=(6)), sg.Text('Moment', key='total2', size=(6))],
         [sg.Push(), sg.Button('Calculate', key="calc1"), sg.Push()]
     ]
@@ -253,17 +252,17 @@ def program():
         [sg.Push(), sg.Text('ZERO FUEL/RAMP/TAKEOFF/LANDING'), sg.Push()],
         [sg.Text('Weight', size=(7,1)), sg.Text('Moment', size=(7,1))],
         [sg.Text('Basic Empty Weight'),       sg.In(size=(8,0), key='empty_weight', default_text=8305.98),sg.In(size=(9,0), key='empty_moment', default_text=25694.16)],
-        [sg.Text('Payload'),                  sg.In(size=(8,0), key='payload_weight'),sg.In(size=(9,0), key='payload_moment')],
-        [sg.Text('Zero Fuel Weight'),         sg.In(size=(8,0), key='zerof_weight'),sg.In(size=(9,0), key='zerof_moment')],
+        [sg.Text('Payload'),                  sg.In(size=(8,0), key='payload_weight'), sg.In(size=(9,0), key='payload_moment')],
+        [sg.Text('Zero Fuel Weight'),         sg.In(size=(8,0), key='zerof_weight'),   sg.In(size=(9,0), key='zerof_moment')],
         [sg.Text('ZFW center of gravity', key='cg1')],
         [sg.Text('Useable Fuel Quantity'),    sg.In(size=(8,0), key='fuel_weight_upd'),sg.In(size=(9,0), key='fuel_moment')],
-        [sg.Text('Ramp Weight'),              sg.In(size=(8,0), key='ramp_weight'),sg.In(size=(9,0), key='ramp_moment')],
+        [sg.Text('Ramp Weight'),              sg.In(size=(8,0), key='ramp_weight'),    sg.In(size=(9,0), key='ramp_moment')],
         [sg.Text('Ramp center of gravity', key='cg2')],
         [sg.Text('Less Fuel for Taxiing (200 lbs)'), sg.In(size=(8,0), key='less_taxi_weight', default_text=200),sg.In(size=(9,0), key='less_taxi_moment')],
         [sg.Text('')],
-        [sg.Text('Takeoff Weight'),           sg.In(size=(8,0), key='tkof_weight'),sg.In(size=(9,0), key='tkof_moment')],
+        [sg.Text('Takeoff Weight'),           sg.In(size=(8,0), key='tkof_weight'),    sg.In(size=(9,0), key='tkof_moment')],
         [sg.Text('Takeoff center of gravity', key='cg3')],
-        [sg.Text('Landing Weight'),           sg.In(size=(8,0), key='land_weight'),sg.In(size=(9,0), key='land_moment')],
+        [sg.Text('Landing Weight'),           sg.In(size=(8,0), key='land_weight'),    sg.In(size=(9,0), key='land_moment')],
         [sg.Text('Landing center of gravity', key='cg4')],
     ]
 
@@ -286,7 +285,8 @@ def program():
     ]
 
     tab_settings = [
-        [sg.Radio('Theme', group_id=1)]
+        [sg.Radio('Theme', group_id=1)],
+        [sg.Button('Open new window', key='open')]
     ]    
 
     layout = [
@@ -450,7 +450,10 @@ def program():
                 sg.popup('Please calculate current CG first')   
 
         if event == 'cj3_button':
-            window['cj3_form'].update(visible=True)         
-                    
+            window['cj3_form'].update(visible=True)    
+
+        if event == 'open':
+            new_window = sg.Window('test', [[sg.Text('Something')]]) 
+            new_window.read()                 
      
 program()

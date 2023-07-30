@@ -125,6 +125,9 @@ class Variables:
 
         self.cg_plots = []
 
+    def get_wing_moments(self):
+        return self.cj3_wing_tank_moments
+
     def add_plots(self, plot: tuple):
         self.cg_plots.append(plot)
 
@@ -311,7 +314,7 @@ class Layouts:
 
 class WeightAndBalance:
 
-    def __init__(self, window, variable) -> None:
+    def __init__(self, window, variable: Variables) -> None:
         self.window = window
         self.variable = variable
 
@@ -365,13 +368,13 @@ class WeightAndBalance:
             if fuel_weight == 4710:
                 fuel_weight = 4700
                 print(fuel_weight)
-            for fuel in self.variable.cj3_wing_tank_moments:
+            for fuel in self.variable.get_wing_moments():
                 if fuel == str(fuel_weight):
                     self.window['fuel_weight_upd'].update(fuel_weight)
-                    fuel_moment = self.variable.cj3_wing_tank_moments[fuel]
+                    fuel_moment = self.variable.get_wing_moments()[fuel]
                     self.window['fuel_moment'].update(fuel_moment)
                     ramp_weight = round(fuel_weight + float(values['zerof_weight']), 2)
-                    ramp_moment = round(float(values['zerof_moment']) + self.variable.cj3_wing_tank_moments[fuel], 2)
+                    ramp_moment = round(float(values['zerof_moment']) + self.variable.get_wing_moments()[fuel], 2)
                     ramp_cg = round(ramp_moment/ramp_weight*100,1)
                     self.variable.add_plots(('Ramp CG', ramp_weight, ramp_cg,'go'))
                     self.window['ramp_weight'].update(ramp_weight)
@@ -383,7 +386,7 @@ class WeightAndBalance:
                     else:
                         self.window['ramp_weight'].update(background_color='#d4d4ce')
             
-            taxi_moment = round(self.variable.cj3_wing_tank_moments[str(fuel_weight)] - self.variable.cj3_wing_tank_moments[str(fuel_weight - int(values['less_taxi_weight']))], 2)
+            taxi_moment = round(self.variable.get_wing_moments()[str(fuel_weight)] - self.variable.get_wing_moments()[str(fuel_weight - int(values['less_taxi_weight']))], 2)
             self.window['less_taxi_moment'].update(taxi_moment)
             tkof_weight = round(ramp_weight - int(values['less_taxi_weight']))
             tkof_moment = round(ramp_moment - taxi_moment)
@@ -398,7 +401,7 @@ class WeightAndBalance:
             else:
                 self.window['tkof_weight'].update(background_color='#d4d4ce')
             land_weight = round(tkof_weight - int(values['fuel_to_destination']))
-            land_moment = round(tkof_moment - (self.variable.cj3_wing_tank_moments[str(fuel_weight)] - self.variable.cj3_wing_tank_moments[str(fuel_weight - int(values['fuel_to_destination']))]))
+            land_moment = round(tkof_moment - (self.variable.get_wing_moments()[str(fuel_weight)] - self.variable.get_wing_moments()[str(fuel_weight - int(values['fuel_to_destination']))]))
             land_cg = round(land_moment/land_weight*100,1)
             self.variable.add_plots(('Landing CG', land_weight, land_cg,'ro'))
             self.window['land_weight'].update(land_weight)

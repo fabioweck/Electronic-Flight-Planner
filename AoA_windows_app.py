@@ -32,10 +32,12 @@ class FileHandler:
                 new_list.append(fav)
             favorites_file.close()
         
+        new_list.sort()
+        
         return new_list
 
         #Adds new location in the favorites file
-    def add_favorites(self, location):
+    def add_favorites(self, location: str):
 
         with open('favorites.csv', 'a') as favorites_file:
             favorites_file.write(location + "\n")
@@ -58,20 +60,21 @@ class Weather:
     def __init__(self) -> None:
         self.message = ""
 
-    def get_taf(self, location):
+    def get_taf(self, location: str):
 
         response = requests.get(f"https://api-redemet.decea.mil.br/mensagens/taf/{location}?api_key=sJgea8VlPUfxZDd2pH1p3DDw2Vyog6cMNDfres44")
         data = response.json()
 
         try:
             print(data['data']['data'][0]['mens'])
+            self.message += f"{data['data']['data'][0]['mens']}\n{100*'_'}"
         except:
-            self.message += 'No TAF for this location'
+            self.message += f"No TAF for this location\n{100*'_'}"
 
-        self.message += f"{data['data']['data'][0]['mens']}\n{100*'_'}"
+        
 
     #Fetches current weather based on specific location
-    def get_metar(self, location):
+    def get_metar(self, location: str):
 
         response = requests.get(f"https://api-redemet.decea.mil.br/mensagens/metar/{location}?api_key=sJgea8VlPUfxZDd2pH1p3DDw2Vyog6cMNDfres44")
 
@@ -79,10 +82,10 @@ class Weather:
 
         try:
             print(data['data']['data'][0]['mens'])
+            self.message += f"{data['data']['data'][0]['mens']}\n\n"
         except:
-            self.message += 'No METAR for this location'
+            self.message += 'No METAR for this location\n'
 
-        self.message += f"{data['data']['data'][0]['mens']}\n\n"
 
     def return_message(self):
         return self.message
@@ -122,7 +125,7 @@ class Variables:
 
         self.cg_plots = []
 
-    def add_plots(self, plot):
+    def add_plots(self, plot: tuple):
         self.cg_plots.append(plot)
 
     def get_plots(self):
@@ -172,7 +175,7 @@ class EnvelopeChart:
         landy = np.array([297.20, 304.6])
         plt.plot(landy, landx, ':', label = 'Max landing weight')
 
-    def generate_chart(self, plots: Variables):
+    def generate_chart(self, plots: list):
 
         plt.title("Citation CJ3 - Envelope Chart")
         plt.xlabel("Center of gravity (Inches)")
@@ -194,148 +197,157 @@ class EnvelopeChart:
         plt.legend()
         plt.show()
 
+class Layouts:
 
-def program():
+    def __init__(self) -> None:
+        self.favorites_file = FileHandler()
+
+    def weather_tab(self):
+
+        tab1_list_column = [
+            [sg.Text('Favorites', size=(10,1))],
+            [sg.Listbox(self.favorites_file.get_favorites(), size=(10, 10), key='favorites', right_click_menu=['', ['Delete']], enable_events=True)],
+            [sg.In(key='add-favorite', size=(5,1)), sg.Button('ADD'), sg.Push()]
+        ]
+
+        tab1_display_column = [
+            [sg.Push(), sg.Button('Search'), sg.In(key='search_metar', size=(6,1)), sg.Push()],
+            [sg.Frame('Metar/TAF',[[sg.Multiline(size=(100,20), key='display-weather')], 
+            [sg.Push(), sg.Button('Clear')]])]
+        ]
+
+        tab1_layout = [
+            [sg.Column(tab1_list_column), sg.Column(tab1_display_column)], 
+                    ]
+        return tab1_layout
     
-    environment = Environment()
-    favorites_file = FileHandler()
-    weather = Weather()
-    variable = Variables()
-    envelope = EnvelopeChart()
+    
+    def weight_and_balance_tab(self):
 
-    tab1_list_column = [
-        [sg.Text('Favorites', size=(10,1))],
-        [sg.Listbox(favorites_file.get_favorites(), size=(10, 10), key='favorites', right_click_menu=['', ['Delete']], enable_events=True)],
-        [sg.In(key='add-favorite', size=(5,1)), sg.Button('ADD'), sg.Push()]
-    ]
-
-    tab1_display_column = [
-        [sg.Push(), sg.Button('Search'), sg.In(key='search_metar', size=(6,1)), sg.Push()],
-        [sg.Frame('Metar/TAF',[[sg.Multiline(size=(100,20), key='display-weather')], 
-        [sg.Push(), sg.Button('Clear')]])]
-    ]
-
-    tab1_layout = [
-        [sg.Column(tab1_list_column), sg.Column(tab1_display_column)], 
-                ] 
-
-    tab2_calc1 = [
-        [sg.Push(), sg.Text('AIRCRAFT LOADING'), sg.Push()],
-        [sg.Text('Item', size=(4,0)), sg.Text('Arm'), sg.Text('Weight'), sg.Text('Moment')],
-        [sg.Text('Pilot'),                         sg.In(size=(5,0), default_text=131.0, key='arm1'),  sg.In(size=(5,0), key='column1',  default_text=180),sg.In(size=(7,0), key='column21')],
-        [sg.Text('Co-Pilot'),                      sg.In(size=(5,0), default_text=131.0, key='arm2'),  sg.In(size=(5,0), key='column2',  default_text=180),sg.In(size=(7,0), key='column22')],
-        [sg.Text('Seat 10'),                       sg.In(size=(5,0), default_text=174.2, key='arm3'),  sg.In(size=(5,0), key='column3',  default_text=0),  sg.In(size=(7,0), key='column23')],
-        [sg.Text('Seat 3'),                        sg.In(size=(5,0), default_text=202.5, key='arm4'),  sg.In(size=(5,0), key='column4',  default_text=0),  sg.In(size=(7,0), key='column24')],
-        [sg.Text('Seat 4'),                        sg.In(size=(5,0), default_text=202.5, key='arm5'),  sg.In(size=(5,0), key='column5',  default_text=0),  sg.In(size=(7,0), key='column25')],
-        [sg.Text('Seat 5'),                        sg.In(size=(5,0), default_text=260.5, key='arm6'),  sg.In(size=(5,0), key='column6',  default_text=0),  sg.In(size=(7,0), key='column26')],
-        [sg.Text('Seat 6'),                        sg.In(size=(5,0), default_text=260.5, key='arm7'),  sg.In(size=(5,0), key='column7',  default_text=0),  sg.In(size=(7,0), key='column27')],
-        [sg.Text('Seat 7'),                        sg.In(size=(5,0), default_text=295.5, key='arm8'),  sg.In(size=(5,0), key='column8',  default_text=0),  sg.In(size=(7,0), key='column28')],
-        [sg.Text('Seat 8'),                        sg.In(size=(5,0), default_text=295.5, key='arm9'),  sg.In(size=(5,0), key='column9',  default_text=0),  sg.In(size=(7,0), key='column29')],
-        [sg.Text('Seat 9 LH Belted Toilet'),       sg.In(size=(5,0), default_text=322.5, key='arm10'), sg.In(size=(5,0), key='column10', default_text=0),  sg.In(size=(7,0), key='column210')],
-        [sg.Text('Nose baggage'),                  sg.In(size=(5,0), default_text=74.0, key='arm11'),  sg.In(size=(5,0), key='column11', default_text=10), sg.In(size=(7,0), key='column211')],
-        [sg.Text('Charts'),                        sg.In(size=(5,0), default_text=150.9, key='arm12'), sg.In(size=(5,0), key='column12', default_text=5),  sg.In(size=(7,0), key='column212')],
-        [sg.Text('LHF Evaporator Cabinet'),        sg.In(size=(5,0), default_text=156.3, key='arm13'), sg.In(size=(5,0), key='column13', default_text=5),  sg.In(size=(7,0), key='column213')],
-        [sg.Text('RH Slimlime Refreshment Center'),sg.In(size=(5,0), default_text=157.2, key='arm14'), sg.In(size=(5,0), key='column14', default_text=15), sg.In(size=(7,0), key='column214')],
-        [sg.Text('LH Aft Vanity'),                 sg.In(size=(5,0), default_text=334.9, key='arm15'), sg.In(size=(5,0), key='column15', default_text=15), sg.In(size=(7,0), key='column215')],
-        [sg.Text('Tailcone Baggage'),              sg.In(size=(5,0), default_text=414.6, key='arm16'), sg.In(size=(5,0), key='column16', default_text=40), sg.In(size=(7,0), key='column216')],
-        [sg.Push(), sg.Text('TOTAL', pad=(0)),sg.Text('Weight', key='total1', size=(6)), sg.Text('Moment', key='total2', size=(6))],
-        [sg.Push(), sg.Button('Calculate', key="calc1"), sg.Push()]
-    ]
+        tab2_calc1 = [
+            [sg.Push(), sg.Text('AIRCRAFT LOADING'), sg.Push()],
+            [sg.Text('Item', size=(4,0)), sg.Text('Arm'), sg.Text('Weight'), sg.Text('Moment')],
+            [sg.Text('Pilot'),                         sg.In(size=(5,0), default_text=131.0, key='arm1'),  sg.In(size=(5,0), key='column1',  default_text=180),sg.In(size=(7,0), key='column21')],
+            [sg.Text('Co-Pilot'),                      sg.In(size=(5,0), default_text=131.0, key='arm2'),  sg.In(size=(5,0), key='column2',  default_text=180),sg.In(size=(7,0), key='column22')],
+            [sg.Text('Seat 10'),                       sg.In(size=(5,0), default_text=174.2, key='arm3'),  sg.In(size=(5,0), key='column3',  default_text=0),  sg.In(size=(7,0), key='column23')],
+            [sg.Text('Seat 3'),                        sg.In(size=(5,0), default_text=202.5, key='arm4'),  sg.In(size=(5,0), key='column4',  default_text=0),  sg.In(size=(7,0), key='column24')],
+            [sg.Text('Seat 4'),                        sg.In(size=(5,0), default_text=202.5, key='arm5'),  sg.In(size=(5,0), key='column5',  default_text=0),  sg.In(size=(7,0), key='column25')],
+            [sg.Text('Seat 5'),                        sg.In(size=(5,0), default_text=260.5, key='arm6'),  sg.In(size=(5,0), key='column6',  default_text=0),  sg.In(size=(7,0), key='column26')],
+            [sg.Text('Seat 6'),                        sg.In(size=(5,0), default_text=260.5, key='arm7'),  sg.In(size=(5,0), key='column7',  default_text=0),  sg.In(size=(7,0), key='column27')],
+            [sg.Text('Seat 7'),                        sg.In(size=(5,0), default_text=295.5, key='arm8'),  sg.In(size=(5,0), key='column8',  default_text=0),  sg.In(size=(7,0), key='column28')],
+            [sg.Text('Seat 8'),                        sg.In(size=(5,0), default_text=295.5, key='arm9'),  sg.In(size=(5,0), key='column9',  default_text=0),  sg.In(size=(7,0), key='column29')],
+            [sg.Text('Seat 9 LH Belted Toilet'),       sg.In(size=(5,0), default_text=322.5, key='arm10'), sg.In(size=(5,0), key='column10', default_text=0),  sg.In(size=(7,0), key='column210')],
+            [sg.Text('Nose baggage'),                  sg.In(size=(5,0), default_text=74.0, key='arm11'),  sg.In(size=(5,0), key='column11', default_text=10), sg.In(size=(7,0), key='column211')],
+            [sg.Text('Charts'),                        sg.In(size=(5,0), default_text=150.9, key='arm12'), sg.In(size=(5,0), key='column12', default_text=5),  sg.In(size=(7,0), key='column212')],
+            [sg.Text('LHF Evaporator Cabinet'),        sg.In(size=(5,0), default_text=156.3, key='arm13'), sg.In(size=(5,0), key='column13', default_text=5),  sg.In(size=(7,0), key='column213')],
+            [sg.Text('RH Slimlime Refreshment Center'),sg.In(size=(5,0), default_text=157.2, key='arm14'), sg.In(size=(5,0), key='column14', default_text=15), sg.In(size=(7,0), key='column214')],
+            [sg.Text('LH Aft Vanity'),                 sg.In(size=(5,0), default_text=334.9, key='arm15'), sg.In(size=(5,0), key='column15', default_text=15), sg.In(size=(7,0), key='column215')],
+            [sg.Text('Tailcone Baggage'),              sg.In(size=(5,0), default_text=414.6, key='arm16'), sg.In(size=(5,0), key='column16', default_text=40), sg.In(size=(7,0), key='column216')],
+            [sg.Push(), sg.Text('TOTAL', pad=(0)),sg.Text('Weight', key='total1', size=(6)), sg.Text('Moment', key='total2', size=(6))],
+            [sg.Push(), sg.Button('Calculate', key="calc1"), sg.Push()]
+            ]
 
 
-    tab2_calc2 = [
-        [sg.Push(), sg.Text('FUEL'), sg.Push()],
-        [sg.Push(), sg.Text('Total fuel - 100 to 4710 lbs (in hundreds):'), sg.In(size=(6,0), key='fuel_weight')],
-        [sg.Push(), sg.Text('Fuel to destination (in hundreds):'), sg.In(size=(6,0), key='fuel_to_destination')],
-        [sg.Push(), sg.Button('Compute'), sg.Push()],
-        [sg.Text()],
-        [sg.Push(), sg.Text('ZERO FUEL/RAMP/TAKEOFF/LANDING'), sg.Push()],
-        [sg.Text('Weight', size=(7,1)), sg.Text('Moment', size=(7,1))],
-        [sg.Text('Basic Empty Weight'),       sg.In(size=(8,0), key='empty_weight', default_text=8305.98),sg.In(size=(9,0), key='empty_moment', default_text=25694.16)],
-        [sg.Text('Payload'),                  sg.In(size=(8,0), key='payload_weight'), sg.In(size=(9,0), key='payload_moment')],
-        [sg.Text('Zero Fuel Weight'),         sg.In(size=(8,0), key='zerof_weight'),   sg.In(size=(9,0), key='zerof_moment')],
-        [sg.Text('ZFW center of gravity', key='cg1')],
-        [sg.Text('Useable Fuel Quantity'),    sg.In(size=(8,0), key='fuel_weight_upd'),sg.In(size=(9,0), key='fuel_moment')],
-        [sg.Text('Ramp Weight'),              sg.In(size=(8,0), key='ramp_weight'),    sg.In(size=(9,0), key='ramp_moment')],
-        [sg.Text('Ramp center of gravity', key='cg2')],
-        [sg.Text('Less Fuel for Taxiing (200 lbs)'), sg.In(size=(8,0), key='less_taxi_weight', default_text=200),sg.In(size=(9,0), key='less_taxi_moment')],
-        [sg.Text('')],
-        [sg.Text('Takeoff Weight'),           sg.In(size=(8,0), key='tkof_weight'),    sg.In(size=(9,0), key='tkof_moment')],
-        [sg.Text('Takeoff center of gravity', key='cg3')],
-        [sg.Text('Landing Weight'),           sg.In(size=(8,0), key='land_weight'),    sg.In(size=(9,0), key='land_moment')],
-        [sg.Text('Landing center of gravity', key='cg4')],
-    ]
+        tab2_calc2 = [
+            [sg.Push(), sg.Text('FUEL'), sg.Push()],
+            [sg.Push(), sg.Text('Total fuel - 100 to 4710 lbs (in hundreds):'), sg.In(size=(6,0), key='fuel_weight')],
+            [sg.Push(), sg.Text('Fuel to destination (in hundreds):'), sg.In(size=(6,0), key='fuel_to_destination')],
+            [sg.Push(), sg.Button('Compute'), sg.Push()],
+            [sg.Text()],
+            [sg.Push(), sg.Text('ZERO FUEL/RAMP/TAKEOFF/LANDING'), sg.Push()],
+            [sg.Text('Weight', size=(7,1)), sg.Text('Moment', size=(7,1))],
+            [sg.Text('Basic Empty Weight'),       sg.In(size=(8,0), key='empty_weight', default_text=8305.98),sg.In(size=(9,0), key='empty_moment', default_text=25694.16)],
+            [sg.Text('Payload'),                  sg.In(size=(8,0), key='payload_weight'), sg.In(size=(9,0), key='payload_moment')],
+            [sg.Text('Zero Fuel Weight'),         sg.In(size=(8,0), key='zerof_weight'),   sg.In(size=(9,0), key='zerof_moment')],
+            [sg.Text('ZFW center of gravity', key='cg1')],
+            [sg.Text('Useable Fuel Quantity'),    sg.In(size=(8,0), key='fuel_weight_upd'),sg.In(size=(9,0), key='fuel_moment')],
+            [sg.Text('Ramp Weight'),              sg.In(size=(8,0), key='ramp_weight'),    sg.In(size=(9,0), key='ramp_moment')],
+            [sg.Text('Ramp center of gravity', key='cg2')],
+            [sg.Text('Less Fuel for Taxiing (200 lbs)'), sg.In(size=(8,0), key='less_taxi_weight', default_text=200),sg.In(size=(9,0), key='less_taxi_moment')],
+            [sg.Text('')],
+            [sg.Text('Takeoff Weight'),           sg.In(size=(8,0), key='tkof_weight'),    sg.In(size=(9,0), key='tkof_moment')],
+            [sg.Text('Takeoff center of gravity', key='cg3')],
+            [sg.Text('Landing Weight'),           sg.In(size=(8,0), key='land_weight'),    sg.In(size=(9,0), key='land_moment')],
+            [sg.Text('Landing center of gravity', key='cg4')],
+            ]
 
-    cj3_form = [
-        [sg.Push(), sg.vtop(sg.Column(tab2_calc1, element_justification='r', key='cj3_sideA')), 
-            sg.VerticalSeparator(), 
-            sg.vtop(sg.Column(tab2_calc2, element_justification='r', key='cj3_sideB')), 
-            sg.Push()]
-    ] 
+        cj3_form = [
+            [sg.Push(), sg.vtop(sg.Column(tab2_calc1, element_justification='r', key='cj3_sideA')), 
+                sg.VerticalSeparator(), 
+                sg.vtop(sg.Column(tab2_calc2, element_justification='r', key='cj3_sideB')), 
+                sg.Push()]
+            ] 
 
-    tab2_layout = [
-        [sg.Push(), sg.Radio('CITATION CJ3/525B (PRVNA) - WEIGHT AND BALANCE COMPUTATION FORM', font='Arial', group_id=1, key='cj3_button', enable_events=True), sg.Push()],
-        [sg.Push(), sg.Text('Weight in pounds, Arm in inches, Moment = moment/100'), sg.Push()],
-        [sg.Frame('Form', cj3_form, visible=False, key='cj3_form')],
-        [sg.Push(), sg.Button('Generate CG envelope', key='cg_envelope'), sg.Push()]
-    ]
+        tab2_layout = [
+            [sg.Push(), sg.Radio('CITATION CJ3/525B (PRVNA) - WEIGHT AND BALANCE COMPUTATION FORM', font='Arial', group_id=1, key='cj3_button', enable_events=True), sg.Push()],
+            [sg.Push(), sg.Text('Weight in pounds, Arm in inches, Moment = moment/100'), sg.Push()],
+            [sg.Frame('Form', cj3_form, visible=False, key='cj3_form')],
+            [sg.Push(), sg.Button('Generate CG envelope', key='cg_envelope'), sg.Push()]
+            ]
 
-    tab3_layout = [
-        [sg.Text("This application is a simple graphic user interface")]
-    ]
+        return tab2_layout
+    
+    
+    def about_tab(self):
 
-    tab_settings = [
-        [sg.Radio('Theme', group_id=1)],
-        [sg.Button('Open new window', key='open')]
-    ]    
+        tab3_layout = [
+            [sg.Text("This application is a simple graphic user interface")]
+            ]
 
-    layout = [
+        return tab3_layout
+    
+    def main_layout(self):
+
+        layout = [
             [sg.TabGroup([
-                [sg.Tab('Weather', tab1_layout), 
-                 sg.Tab('W/B', tab2_layout, element_justification='c'),
-                 sg.Tab('Settings', tab_settings), 
-                 sg.Tab('About', tab3_layout, element_justification='c')
-                 ]
-                ])]
-            ]    
+            [sg.Tab('Weather', self.weather_tab()), 
+                sg.Tab('W/B', self.weight_and_balance_tab(), element_justification='c'),
+                sg.Tab('About', self.about_tab(), element_justification='c')
+                ]
+            ])]
+            ]
+        
+        return layout
 
-    window = sg.Window('Electronic Flight Planner - Fabio Weck', layout, finalize=True)
+class WeightAndBalance:
 
-    def calc_acft_load():
+    def __init__(self, window, variable) -> None:
+        self.window = window
+        self.variable = variable
+
+    def calc_acft_load(self, values):
         sum_weight = 0
         for i in range(1,17):
             sum_weight += float(values[f"column{i}"])
-        window['total1'].update(sum_weight)
-        window['payload_weight'].update(sum_weight)
-
+        self.window['total1'].update(sum_weight)
+        self.window['payload_weight'].update(sum_weight)
         find_moment = 0
         moment_total = 0
         for i in range(1,17):
             find_moment = (float(values[f"arm{i}"]) * float(values[f"column{i}"]))/100
             moment_total += find_moment
-            window[f"column2{i}"].update(find_moment)
+            self.window[f"column2{i}"].update(find_moment)
         moment_total = round(moment_total, 2)
-        window['total2'].update(moment_total)
-        window['payload_moment'].update(moment_total)
+        self.window['total2'].update(moment_total)
+        self.window['payload_moment'].update(moment_total)
         zerof_weight = float(values['empty_weight']) + sum_weight
         zerof_moment = float(values['empty_moment']) + moment_total
         zerof_cg = round(zerof_moment/zerof_weight*100, 1)
-        if len(variable.get_plots()) == 0:
-            variable.add_plots(('ZFW CG', zerof_weight, zerof_cg, 'o'))
+        if len(self.variable.get_plots()) == 0:
+            self.variable.add_plots(('ZFW CG', zerof_weight, zerof_cg, 'o'))
         else:
-            variable.erase_plots()
-            variable.add_plots(('ZFW CG', zerof_weight, zerof_cg, 'o'))
-        window['zerof_weight'].update(zerof_weight)
-        window['zerof_moment'].update(zerof_moment)
-        window['cg1'].update(f"ZFW center of gravity: {zerof_cg}")
+            self.variable.erase_plots()
+            self.variable.add_plots(('ZFW CG', zerof_weight, zerof_cg, 'o'))
+        self.window['zerof_weight'].update(zerof_weight)
+        self.window['zerof_moment'].update(zerof_moment)
+        self.window['cg1'].update(f"ZFW center of gravity: {zerof_cg}")
         if zerof_weight > 10510:
             sg.popup('Max. zero fuel weight is 10510 lbs')
-            window['zerof_weight'].update(background_color='red')
+            self.window['zerof_weight'].update(background_color='red')
         else:
-            window['zerof_weight'].update(background_color='#d4d4ce')
-        
+            self.window['zerof_weight'].update(background_color='#d4d4ce')
 
-    def compute_weight():
+    def compute_weight(self, values):
 
         if values['payload_weight'] == '':
                 sg.popup('Please calculate payload first')
@@ -349,111 +361,118 @@ def program():
             sg.popup("Max. fuel total 4710 lbs")
         else:
             #calculate zero fuel weight
-            
             fuel_weight = int(values['fuel_weight'])
             if fuel_weight == 4710:
                 fuel_weight = 4700
                 print(fuel_weight)
-            for fuel in variable.cj3_wing_tank_moments:
+            for fuel in self.variable.cj3_wing_tank_moments:
                 if fuel == str(fuel_weight):
-                    window['fuel_weight_upd'].update(fuel_weight)
-                    fuel_moment = variable.cj3_wing_tank_moments[fuel]
-                    window['fuel_moment'].update(fuel_moment)
+                    self.window['fuel_weight_upd'].update(fuel_weight)
+                    fuel_moment = self.variable.cj3_wing_tank_moments[fuel]
+                    self.window['fuel_moment'].update(fuel_moment)
                     ramp_weight = round(fuel_weight + float(values['zerof_weight']), 2)
-                    ramp_moment = round(float(values['zerof_moment']) + variable.cj3_wing_tank_moments[fuel], 2)
+                    ramp_moment = round(float(values['zerof_moment']) + self.variable.cj3_wing_tank_moments[fuel], 2)
                     ramp_cg = round(ramp_moment/ramp_weight*100,1)
-                    variable.add_plots(('Ramp CG', ramp_weight, ramp_cg,'go'))
-                    window['ramp_weight'].update(ramp_weight)
-                    window['ramp_moment'].update(ramp_moment)
-                    window['cg2'].update(f"Ramp center of gravity: {ramp_cg}")
+                    self.variable.add_plots(('Ramp CG', ramp_weight, ramp_cg,'go'))
+                    self.window['ramp_weight'].update(ramp_weight)
+                    self.window['ramp_moment'].update(ramp_moment)
+                    self.window['cg2'].update(f"Ramp center of gravity: {ramp_cg}")
                     if ramp_weight > 14070:
                         sg.popup('Max. ramp weight is 14070 lbs')
-                        window['ramp_weight'].update(background_color='red')
+                        self.window['ramp_weight'].update(background_color='red')
                     else:
-                        window['ramp_weight'].update(background_color='#d4d4ce')
+                        self.window['ramp_weight'].update(background_color='#d4d4ce')
             
-            taxi_moment = round(variable.cj3_wing_tank_moments[str(fuel_weight)] - variable.cj3_wing_tank_moments[str(fuel_weight - int(values['less_taxi_weight']))], 2)
-            window['less_taxi_moment'].update(taxi_moment)
+            taxi_moment = round(self.variable.cj3_wing_tank_moments[str(fuel_weight)] - self.variable.cj3_wing_tank_moments[str(fuel_weight - int(values['less_taxi_weight']))], 2)
+            self.window['less_taxi_moment'].update(taxi_moment)
             tkof_weight = round(ramp_weight - int(values['less_taxi_weight']))
             tkof_moment = round(ramp_moment - taxi_moment)
             tkof_cg = round(tkof_moment/tkof_weight*100,1)
-            variable.add_plots(('Takeoff CG', tkof_weight, tkof_cg,'bo'))
-            window['tkof_weight'].update(tkof_weight)
-            window['tkof_moment'].update(tkof_moment)
-            window['cg3'].update(f"Takeoff center of gravity: {tkof_cg}")
+            self.variable.add_plots(('Takeoff CG', tkof_weight, tkof_cg,'bo'))
+            self.window['tkof_weight'].update(tkof_weight)
+            self.window['tkof_moment'].update(tkof_moment)
+            self.window['cg3'].update(f"Takeoff center of gravity: {tkof_cg}")
             if tkof_weight > 13870:
                 sg.popup('Max. takeoff weight is 13870 lbs')
-                window['tkof_weight'].update(background_color='red')
+                self.window['tkof_weight'].update(background_color='red')
             else:
-                window['tkof_weight'].update(background_color='#d4d4ce')
+                self.window['tkof_weight'].update(background_color='#d4d4ce')
             land_weight = round(tkof_weight - int(values['fuel_to_destination']))
-            land_moment = round(tkof_moment - (variable.cj3_wing_tank_moments[str(fuel_weight)] - variable.cj3_wing_tank_moments[str(fuel_weight - int(values['fuel_to_destination']))]))
+            land_moment = round(tkof_moment - (self.variable.cj3_wing_tank_moments[str(fuel_weight)] - self.variable.cj3_wing_tank_moments[str(fuel_weight - int(values['fuel_to_destination']))]))
             land_cg = round(land_moment/land_weight*100,1)
-            variable.add_plots(('Landing CG', land_weight, land_cg,'ro'))
-            window['land_weight'].update(land_weight)
-            window['land_moment'].update(land_moment)
-            window['cg4'].update(f"Landing center of gravity: {land_cg}")
+            self.variable.add_plots(('Landing CG', land_weight, land_cg,'ro'))
+            self.window['land_weight'].update(land_weight)
+            self.window['land_moment'].update(land_moment)
+            self.window['cg4'].update(f"Landing center of gravity: {land_cg}")
             if land_weight > 12510:
                 sg.popup('Max. landing weight is 12510 lbs')
-                window['land_weight'].update(background_color='red')
+                self.window['land_weight'].update(background_color='red')
             else:
-                window['land_weight'].update(background_color='#d4d4ce')
+                self.window['land_weight'].update(background_color='#d4d4ce')
 
-#################### - MAIN LOOP - ######################
+######## - MAIN CLASS - ########
+class Program:
 
-    while True:    
-        event, values = window.read()        
-        if event == sg.WIN_CLOSED:             
-            break
-        if event == 'ADD':
-            if len(values['add-favorite']) < 4:
-                sg.popup("4 letters required")
-            else:
-                favorites_file.add_favorites(values['add-favorite'])
-                window['favorites'].update(favorites_file.get_favorites())
-                window['add-favorite'].update("")
-        if event == 'Delete':
-            if len(values['favorites']) == 0:
-                pass
-            else:
-                favorites_file.remove_favorite(values['favorites'][0])
-                window['favorites'].update(favorites_file.get_favorites())
-        if event == 'favorites':
-            if len(values['favorites']) == 0:
-                pass
-            else:
-                window['search_metar'].update(values['favorites'][0])
-        if event == 'Search':
-            if len(values['search_metar']) < 4:
-                sg.popup("Please type in a valid airpot ICAO code")
-            else:
-                weather.get_metar(values['search_metar'])
-                weather.get_taf(values['search_metar'])
-                window['display-weather'].update(weather.message)
-           
-                
-        if event == 'Clear':
-            window['display-weather'].update('')
-            weather.clear_message()
+    def __init__(self) -> None:
+        self.favorites_file = FileHandler()
+        self.layouts = Layouts()
+        self.environment = Environment()
+        self.weather = Weather()
+        self.variable = Variables()
+        self.envelope = EnvelopeChart()    
+        self.window = sg.Window('Electronic Flight Planner - Fabio Weck', self.layouts.main_layout(), finalize=True)
+        self.wb = WeightAndBalance(self.window, self.variable)
 
-        if event == 'calc1':
-            calc_acft_load()
+    def start(self):
+        while True:    
+            event, values = self.window.read()        
+            if event == sg.WIN_CLOSED:             
+                break
+            if event == 'ADD':
+                if len(values['add-favorite']) < 4:
+                    sg.popup("4 letters required")
+                else:
+                    self.favorites_file.add_favorites(values['add-favorite'])
+                    self.window['favorites'].update(self.favorites_file.get_favorites())
+                    self.window['add-favorite'].update("")
+            if event == 'Delete':
+                if len(values['favorites']) == 0:
+                    pass
+                else:
+                    self.favorites_file.remove_favorite(values['favorites'][0])
+                    self.window['favorites'].update(self.favorites_file.get_favorites())
+            if event == 'favorites':
+                if len(values['favorites']) == 0:
+                    pass
+                else:
+                    self.window['search_metar'].update(values['favorites'][0])
+            if event == 'Search':
+                if len(values['search_metar']) < 4:
+                    sg.popup("Please type in a valid airpot ICAO code")
+                else:
+                    self.weather.get_metar(values['search_metar'])
+                    self.weather.get_taf(values['search_metar'])
+                    self.window['display-weather'].update(self.weather.return_message())
+                    
+            if event == 'Clear':
+                self.window['display-weather'].update('')
+                self.weather.clear_message()
 
-        if event == 'Compute':
-            compute_weight()
-        
-        if event == 'cg_envelope':
-            try:
-                envelope.generate_chart(variable.get_plots())
-                variable.erase_plots()
-            except:
-                sg.popup('Please calculate current CG first')   
+            if event == 'calc1':
+                self.wb.calc_acft_load(values)
 
-        if event == 'cj3_button':
-            window['cj3_form'].update(visible=True)    
+            if event == 'Compute':
+                self.wb.compute_weight(values)
+            
+            if event == 'cg_envelope':
+                try:
+                    self.envelope.generate_chart(self.variable.get_plots())
+                    self.variable.erase_plots()
+                except:
+                    sg.popup('Please calculate current CG first')   
 
-        if event == 'open':
-            new_window = sg.Window('test', [[sg.Text('Something')]]) 
-            new_window.read()                 
+            if event == 'cj3_button':
+                self.window['cj3_form'].update(visible=True)                
      
-program()
+program = Program()
+program.start()

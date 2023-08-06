@@ -77,7 +77,7 @@ class Layouts:
             [sg.Text('RH Slimlime Refreshment Center'),sg.In(size=(5,0), default_text=157.2, key='arm14'), sg.In(size=(5,0), key='column14', default_text=15), sg.In(size=(7,0), key='column214')],
             [sg.Text('LH Aft Vanity'),                 sg.In(size=(5,0), default_text=334.9, key='arm15'), sg.In(size=(5,0), key='column15', default_text=15), sg.In(size=(7,0), key='column215')],
             [sg.Text('Tailcone Baggage'),              sg.In(size=(5,0), default_text=414.6, key='arm16'), sg.In(size=(5,0), key='column16', default_text=40), sg.In(size=(7,0), key='column216')],
-            [sg.Push(), sg.Text('TOTAL', pad=(0)),sg.Text('Weight', key='total1', size=(6)), sg.Text('Moment', key='total2', size=(6))],
+            [sg.Push(), sg.Text('TOTAL', size=(6), font=("Helvetica", 10, "bold")),sg.Text('Weight', key='total1', size=(6), pad=(0), font=("Helvetica", 10, "bold")), sg.Text('Moment', key='total2', size=(6), pad=(0), font=("Helvetica", 10, "bold"))],
             [sg.Push(), sg.Button('Calculate', key="calc1"), sg.Push()]
             ]
 
@@ -93,16 +93,16 @@ class Layouts:
             [sg.Text('Basic Empty Weight'),       sg.In(size=(8,0), key='empty_weight', default_text=8305.98),sg.In(size=(9,0), key='empty_moment', default_text=25694.16)],
             [sg.Text('Payload'),                  sg.In(size=(8,0), key='payload_weight'), sg.In(size=(9,0), key='payload_moment')],
             [sg.Text('Zero Fuel Weight'),         sg.In(size=(8,0), key='zerof_weight'),   sg.In(size=(9,0), key='zerof_moment')],
-            [sg.Text('ZFW center of gravity', key='cg1')],
+            [sg.Text('ZFW center of gravity', key='cg1', font=("Helvetica", 10, "bold"))],
             [sg.Text('Useable Fuel Quantity'),    sg.In(size=(8,0), key='fuel_weight_upd'),sg.In(size=(9,0), key='fuel_moment')],
             [sg.Text('Ramp Weight'),              sg.In(size=(8,0), key='ramp_weight'),    sg.In(size=(9,0), key='ramp_moment')],
-            [sg.Text('Ramp center of gravity', key='cg2')],
+            [sg.Text('Ramp center of gravity', key='cg2', font=("Helvetica", 10, "bold"))],
             [sg.Text('Less Fuel for Taxiing (200 lbs)'), sg.In(size=(8,0), key='less_taxi_weight', default_text=200),sg.In(size=(9,0), key='less_taxi_moment')],
             [sg.Text('')],
             [sg.Text('Takeoff Weight'),           sg.In(size=(8,0), key='tkof_weight'),    sg.In(size=(9,0), key='tkof_moment')],
-            [sg.Text('Takeoff center of gravity', key='cg3')],
+            [sg.Text('Takeoff center of gravity', key='cg3', font=("Helvetica", 10, "bold"))],
             [sg.Text('Landing Weight'),           sg.In(size=(8,0), key='land_weight'),    sg.In(size=(9,0), key='land_moment')],
-            [sg.Text('Landing center of gravity', key='cg4')],
+            [sg.Text('Landing center of gravity', key='cg4', font=("Helvetica", 10, "bold"))],
             ]
 
         cj3_form = [

@@ -2,8 +2,9 @@
 Useful collection of tools for pilots! (ICAO - Brazil)
 
 This program was created to help pilots in their pre-flight planning.
-It includes tools like current weather and forecast (in aviation/ICAO standards), weight and balance calculation, aeronautical information,
-notice to airmen and flight planning.
+It currently includes actual weather and forecast (in aviation/ICAO standards) and weight and balance calculation.
+Further improvements will implement complete aeronautical information, notice to airmen and flight planning, as well as 
+exportable documents in PDF files along with automated forms sent via email in order to help pilots keep their registry.
 
 **UNDER DEVELOPMENT...!**
 

@@ -2,7 +2,10 @@
 Useful collection of tools for pilots! (ICAO - Brazil)
 
 This program was created to help pilots in their pre-flight planning.
-It currently includes actual weather and forecast (in aviation/ICAO standards) and weight and balance calculation.
+It currently includes real time weather and forecast (in aviation/ICAO standards) provided by brazilian agency 
+DECEA - Department of Airspace Control, through APIs. It is also possible to calculate weight and balance of an aircraft 
+Cessna CJ3 model and see the results in a graph chart which displays center of gravity limits and its plots regarding
+each phase of flight.
 Further improvements will implement complete aeronautical information, notice to airmen and flight planning, as well as 
 exportable documents in PDF files along with automated forms sent via email in order to help pilots keep their registry.
 
